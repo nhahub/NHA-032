@@ -39,7 +39,7 @@ The final deliverable includes both **SQL views** for KPIs and a set of **intera
 ---
 
 ## 🚀 Project Structure  
-``
+```
 Airline-Flight-Delays-Analytics/
 │
 ├── SQL/
@@ -52,7 +52,7 @@ Airline-Flight-Delays-Analytics/
 │ └── Airline_Project_Documentation.pptx
 │
 └── README.md
-``
+```
 ---
 
 ## 📁 Dataset  
