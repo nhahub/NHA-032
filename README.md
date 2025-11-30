@@ -48,6 +48,8 @@ Airline-Flight-Delays-Analytics/
 │ └── graduation project KPIs.sql
 │
 ├── Documentation/
+│ ├── Airline Flight Delays (Business research)
+│ ├── Data Dictionary
 │ ├── DDL & Quality check.pdf
 │ ├── Dashboards & Insights.pdf
 │ └── Airline Delay Analysis presentation.pdf
