@@ -42,14 +42,15 @@ The final deliverable includes both **SQL views** for KPIs and a set of **intera
 ```
 Airline-Flight-Delays-Analytics/
 │
-├── SQL/
-│ └── KPI_Views.sql
-│
-├── PowerBI_Dashboard/
-│ └── Flight_Delays.pbix
+├── Scripts/
+│ ├── DDL.sql
+│ ├── Quality check.sql
+│ └── graduation project KPIs.sql
 │
 ├── Documentation/
-│ └── Airline_Project_Documentation.pptx
+│ ├── DDL & Quality check.pdf
+│ ├── Dashboards & Insights.pdf
+│ └── Airline Delay Analysis presentation.pdf
 │
 └── README.md
 ```
@@ -98,7 +99,8 @@ Over **30 analytical SQL views**, including:
 - **Delay Analysis**  
 - **Cancellation Analysis**  
 - **Seasonality & Trends**  
-- **Airport & Route Insights**  
+- **Airport & Route Analysis**
+- **Busiest Airports and their effect on Delay**  
 
 Each dashboard provides interactive explorations of flight operations and reliability metrics.
 
@@ -116,7 +118,7 @@ Each dashboard provides interactive explorations of flight operations and reliab
 ## 📣 About This Project  
 This project demonstrates end-to-end analytical thinking:
 
-- Collect → Clean → Model → Analyze → Visualize  
+- Structure creation → Data Ingestion → Clean → Model → Analyze → Visualize  
 - Translate aviation data into insights relevant for business stakeholders  
 - Showcase SQL proficiency and Power BI storytelling  
 
