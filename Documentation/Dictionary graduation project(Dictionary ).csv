@@ -1,0 +1,53 @@
+Airlines,,,,,,
+,Column Name,Purpose,Data Type,Sample,Relationship,Data Quality Check
+,IATA_CODE,Airline unique code,Identifier,"AA, OO, B6",Links to AIRLINE column in flights table,"Check for duplicates, missing values"
+,AIRLINE,Airline full name,Categorical/Text,American Airlines Inc.,Used for identification and comparison between airlines,missing values
+,,,,,,
+Airports,,,,,,
+,Column Name,Purpose,Data Type,Sample,Relationship,Data Quality Check
+,IATA_CODE,Airport code,Identifier,"IAD, AZO",Links with ORIGIN_AIRPORT & DESTINATION_AIRPORT in flights,"Unique, no nulls"
+,AIRPORT,Full airport name,Categorical/Text,Washington Dulles ,Reference info,Check for nulls
+,CITY,City of the airport,Categorical/Text,"Chantilly, Kalamazoo",For geo/region analysis,Check for nulls
+,STATE,U.S. state,Categorical/Text,"VA, MI",Used for regional grouping,Validate against official state codes
+,COUNTRY,Country,Categorical/Text,USA,Should always be “USA”,Consistency check
+,LATITUDE,Geo coordinate (North–South),Number,38.94453,Used for mapping,Range check (-90 to +90)
+,LONGITUDE,Geo coordinate (East–West),Number,-77.45581,Used for mapping,Range check (-180 to +180)
+,,,,,,
+Flights,,,,,,
+,Column Name,Purpose,Data Type,Sample,Relationship,Data Quality Check
+,YEAR,Flight year,INT,2015,Helps form datetime with MONTH & DAY,"Check for valid year, no nulls"
+,MONTH,Month of flight,INT,1,Used to analyze seasonal trends,Range 1–12
+,DAY,Day of month,INT,15,Builds flight date,Range 1–31 depending on month
+,DAY_OF_WEEK,Day of week (1=Sunday),INT,3,Used for weekday performance,Range 1–7
+,AIRLINE,Airline code,VARCHAR,AA,Joins to airlines.IATA_CODE,Check for nulls 
+,FLIGHT_NUMBER,Flight number,INT,428,Identifier per airline,No negative values
+,TAIL_NUMBER,Aircraft registration ID,VARCHAR,N3KUAA,Links multiple flights by same aircraft,Check for nulls
+,ORIGIN_AIRPORT,Departure airport code,VARCHAR,JFK,Joins airports.IATA_CODE,Check for valid 3-letter codes
+,DESTINATION_AIRPORT,Arrival airport code,VARCHAR,LAX,Joins airports.IATA_CODE,Check for valid 3-letter codes
+,SCHEDULED_DEPARTURE,Planned departure time (HHMM),INT,1520,Creates full datetime when combined with date,"Check 0–2359 range, detect invalid 2360"
+,DEPARTURE_TIME,Actual departure time,INT,1537,Used to calculate delays,"Check 0–2359, nulls allowed for cancelled flights"
+,DEPARTURE_DELAY,Delay in minutes,INT,17,KPI for on-time performance,Look for extreme values / negatives
+,TAXI_OUT,Minutes from gate to runway,INT,10,Part of total turnaround time,Check for negative/abnormal values
+,WHEELS_OFF,Takeoff time,INT,1547,Calculated using DEPARTURE_TIME + TAXI_OUT,Check time validity
+,SCHEDULED_TIME,Planned travel duration,INT,360,Used vs ELAPSED_TIME,Check for negative values
+,ELAPSED_TIME,Actual gate-to-gate time,INT,380,Used to compute delays,Check for negative values
+,AIR_TIME,Time spent in the air,INT,350,Should equal ELAPSED_TIME - TAXI_OUT - TAXI_IN,Logical consistency check
+,DISTANCE,Route distance (miles),INT,2475,Used for route analysis,Check positive values
+,WHEELS_ON,Landing time,INT,1745,Compare with WHEELS_OFF + AIR_TIME,Check valid HHMM
+,TAXI_IN,Minutes from runway to gate,INT,20,Affects arrival timing,Check extreme values
+,SCHEDULED_ARRIVAL,Planned arrival time,INT,1740,Used for arrival delay calculation,Validate time format
+,ARRIVAL_TIME,Actual arrival time,INT,1805,Used for ARRIVAL_DELAY,Check 0–2359
+,ARRIVAL_DELAY,Delay in minutes,INT,25,KPI for airline performance,Detect impossible values 
+,DIVERTED,Whether flight diverted (0/1),INT (BOOL),0,Used in diversion analysis,Should be only 0 or 1
+,CANCELLED,Whether flight canceled (0/1),INT (BOOL),0,Used in cancellation KPIs,Only 0 or 1
+,CANCELLATION_REASON,Reason code,VARCHAR,B,Used for breakdowns,Must match allowed reason codes
+,AIR_SYSTEM_DELAY,Delay due to ATC/system,INT,0,Used in delay cause analysis,Nulls ? treat as zero
+,SECURITY_DELAY,Delay due to security,INT,0,Included in total delay,Nulls ? treat as zero
+,AIRLINE_DELAY,Delay caused by airline,INT,12,Breaks down causes,Nulls ? treat as zero
+,LATE_AIRCRAFT_DELAY,Delay from previous flight,INT,15,Used in root-cause analysis,Nulls ? treat as zero
+,WEATHER_DELAY,Delay caused by weather,INT,5,For airport weather patterns,Nulls ? treat as zero
+,,,,,,
+Cancellation_Codes ,,,,,,
+,Column Name,Purpose,Data Type,Sample,Relationship,Data Quality Check
+,CANCELLATION_REASON,To indicate why a flight was cancelled.,Identifier,"A,B,C,D",It gives the main reason for cancellation in a standardized form,Uniqueness
+,CANCELLATION_DESCRIPTION,To provide a human-readable explanation for the cancellation reason.,Text,Weather,It provides extra context or a more specific explanation of the cancellation,Null Check
