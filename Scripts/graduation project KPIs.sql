@@ -350,10 +350,7 @@ SELECT
 FROM flights
 GROUP BY time_period;
 
-
-
-
--- ------------------------------------------------Manar------------------------------------------------
+-- ------------------------------------------------------------------------------------------------
 -- Monthly flight trends
 CREATE OR REPLACE VIEW monthly_flight_trends AS
 SELECT 
@@ -453,3 +450,146 @@ FROM flights
 GROUP BY day_name
 ORDER BY FIELD(day_name, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday');
 
+
+------------------------------------------------------ Added KPIs -----------------------------------------------------------------------------
+-- Avg delay per flight
+CREATE OR REPLACE VIEW avg_delay_per_flight AS
+SELECT 
+    ROUND(
+        SUM(
+            AIR_SYSTEM_DELAY 
+            + SECURITY_DELAY 
+            + AIRLINE_DELAY 
+            + LATE_AIRCRAFT_DELAY 
+            + WEATHER_DELAY
+        ) 
+        / NULLIF(COUNT(*), 0),
+    2) AS avg_delay_per_flight
+FROM flights;
+
+-- Total Cancellation
+CREATE OR REPLACE VIEW total_cancellation AS
+SELECT 
+    SUM(CANCELLED) AS total_cancellations
+FROM flights;
+
+-- overall Delay rate ---
+CREATE OR REPLACE VIEW overall_Delay_rate AS
+SELECT 
+    COUNT(*) AS total_flights,
+    SUM(CASE 
+            WHEN ARRIVAL_DELAY > 0 
+            THEN 1 
+            ELSE 0 
+        END) AS delayed_flights,
+    ROUND(
+        SUM(CASE 
+                WHEN ARRIVAL_DELAY > 0 
+                THEN 1 
+            END) / NULLIF(COUNT(*),0),
+        4
+    ) AS delay_rate_pct
+FROM flights
+WHERE CANCELLED = 0;
+
+-- On time overall ---
+CREATE OR REPLACE VIEW v_on_time_rate_ AS
+SELECT 
+    COUNT(*) AS total_flights,
+    SUM(CASE 
+            WHEN ARRIVAL_DELAY <= 0 THEN 1 
+            ELSE 0 
+        END) AS on_time_flights,
+    ROUND(
+        SUM(CASE 
+                WHEN ARRIVAL_DELAY <= 0 THEN 1 
+            END) / NULLIF(COUNT(*), 0),
+        4
+    ) AS on_time_rate_pct
+FROM flights
+WHERE CANCELLED = 0;
+
+-- Total arival Delay ---- 
+CREATE OR REPLACE VIEW v_total_arrival_delay AS
+SELECT 
+    COUNT(*) AS delayed_flights
+FROM flights
+WHERE ARRIVAL_DELAY > 0
+AND CANCELLED = 0
+AND DIVERTED = 0;
+
+
+-- Cancellation rate overall
+CREATE OR REPLACE VIEW v_cancellation_rate_overall AS
+SELECT
+    SUM(CANCELLED)/COUNT(*) flight_pct
+    FROM flights;
+
+
+-- Number of Airlines
+CREATE OR REPLACE VIEW number_of_airlines AS
+SELECT 
+    COUNT(*) AIRLINE
+FROM
+    airlines
+    
+-- . Arrival Delay Distribution (delay brackets counts)
+CREATE OR REPLACE VIEW v_Arrival_delay_distribution AS
+SELECT 
+  AIRLINE,
+  SUM(CASE WHEN ARRIVAL_DELAY <= 0 THEN 1 ELSE 0 END) AS on_time,
+  SUM(CASE WHEN ARRIVAL_DELAY BETWEEN 1 AND 15 THEN 1 ELSE 0 END) AS minor_delay,
+  SUM(CASE WHEN ARRIVAL_DELAY BETWEEN 16 AND 60 THEN 1 ELSE 0 END) AS moderate_delay,
+  SUM(CASE WHEN ARRIVAL_DELAY > 60 THEN 1 ELSE 0 END) AS major_delay
+FROM flights
+WHERE CANCELLED = 0
+GROUP BY AIRLINE;
+
+-- 3- Total Flights --> v_flights_wo_canc    (NOTE) --> There is Quick Meaure in Power BI "Sum of flightss_to_destination divided by Sum of Total_flights"
+CREATE OR REPLACE VIEW v_flights_wo_canc AS
+SELECT  COUNT(FLIGHT_NUMBER) beforecalc,
+		COUNT(CASE WHEN CANCELLED = 1 THEN 1 END) Cancelled_flights,
+    COUNT(FLIGHT_NUMBER) - (SELECT 
+            COUNT(*) AS cancellations_count
+        FROM
+            flights
+        WHERE
+            CANCELLED = 1) Total_flights
+FROM
+    flights;
+
+-- - Busiest Origin Delay --> v_org_delay
+CREATE OR REPLACE VIEW v_org_delay AS
+SELECT vado.* FROM v_avg_delay_originairport vado
+INNER JOIN v_busiest_routes vbr ON vado.ORIGIN_AIRPORT = vbr.ORIGIN_AIRPORT;
+
+-- - Busiest Destination Delay --> v_des_delay
+CREATE OR REPLACE VIEW v_des_delay AS 
+SELECT vadd.* FROM v_avg_delay_destinationairport AS vadd
+INNER JOIN v_busiest_routes AS vbr ON vadd.DESTINATION_AIRPORT = vbr.DESTINATION_AIRPORT;
+
+
+CREATE OR REPLACE VIEW v_airline_summary_hassan AS
+SELECT 
+    f.AIRLINE,
+    COUNT(DISTINCT f.TAIL_NUMBER) AS num_aircraft,
+    COUNT(DISTINCT f.FLIGHT_NUMBER) AS total_flights,
+    ROUND(AVG(d.avg_distance), 2) AS avg_distance,
+    ROUND(AVG(s.avg_elapsed_time_diff), 2) AS avg_elapsed_time_diff,
+    MAX(c.estimated_cost_usd) AS total_estimated_cost_usd
+FROM flights f
+LEFT JOIN v_avg_distance_per_flights d ON f.AIRLINE = d.AIRLINE
+LEFT JOIN v_avg_scheduled_vs_actual_elapsed_time s ON f.AIRLINE = s.AIRLINE
+LEFT JOIN v_delay_cost_estimate c ON f.AIRLINE = c.AIRLINE
+GROUP BY f.AIRLINE;
+
+
+CREATE OR REPLACE VIEW v_avg_dwell_time_per_tail AS
+SELECT 
+    TAIL_NUMBER,
+    ROUND(AVG((WHEELS_OFF - WHEELS_ON) / 60.0), 2) AS avg_dwell_minutes
+FROM flights
+WHERE WHEELS_OFF IS NOT NULL 
+  AND WHEELS_ON IS NOT NULL 
+  AND (WHEELS_OFF - WHEELS_ON) > 0
+GROUP BY TAIL_NUMBER;
