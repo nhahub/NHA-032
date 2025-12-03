@@ -468,46 +468,62 @@ SELECT
 FROM flights;
 
 -- Total Cancellation
-CREATE OR REPLACE VIEW total_cancellation AS
+CREATE OR REPLACE VIEW total_cancellation_2 AS
 SELECT 
     SUM(CANCELLED) AS total_cancellations
 FROM flights;
 
 -- overall Delay rate ---
-CREATE OR REPLACE VIEW overall_Delay_rate AS
+CREATE OR REPLACE VIEW overall_Delay_rate_2 AS
 SELECT 
     COUNT(*) AS total_flights,
     SUM(CASE 
-            WHEN ARRIVAL_DELAY > 0 
+            WHEN ARRIVAL_DELAY > 0 AND DIVERTED = 0
             THEN 1 
             ELSE 0 
         END) AS delayed_flights,
     ROUND(
         SUM(CASE 
-                WHEN ARRIVAL_DELAY > 0 
+                WHEN ARRIVAL_DELAY > 0 AND DIVERTED = 0
                 THEN 1 
             END) / NULLIF(COUNT(*),0),
         4
     ) AS delay_rate_pct
-FROM flights
-WHERE CANCELLED = 0;
+FROM flights;
 
 -- On time overall ---
-CREATE OR REPLACE VIEW v_on_time_rate_ AS
+CREATE OR REPLACE VIEW v_on_time_rate_2 AS
 SELECT 
     COUNT(*) AS total_flights,
     SUM(CASE 
-            WHEN ARRIVAL_DELAY <= 0 THEN 1 
+            WHEN ARRIVAL_DELAY <= 0 AND DIVERTED = 0 AND CANCELLED =0 THEN 1 
             ELSE 0 
         END) AS on_time_flights,
     ROUND(
         SUM(CASE 
-                WHEN ARRIVAL_DELAY <= 0 THEN 1 
+                WHEN ARRIVAL_DELAY <= 0 AND DIVERTED = 0 AND CANCELLED =0  THEN 1 
             END) / NULLIF(COUNT(*), 0),
         4
     ) AS on_time_rate_pct
-FROM flights
-WHERE CANCELLED = 0;
+FROM flights;
+
+
+-- DIVERTED
+CREATE OR REPLACE VIEW v_diverted_2 AS
+SELECT 
+    COUNT(*) AS total_flights,
+    SUM(CASE 
+            WHEN DIVERTED = 1 THEN 1 
+            ELSE 0 
+        END) AS diverted_flights,
+    ROUND(
+        SUM(CASE 
+                WHEN DIVERTED = 1 THEN 1 
+            END) / NULLIF(COUNT(*), 0),
+        4
+    ) AS diverted_flights_pct
+FROM flights;
+
 
 -- Total arival Delay ---- 
 CREATE OR REPLACE VIEW v_total_arrival_delay AS
